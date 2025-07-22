@@ -1,0 +1,4 @@
+venv/
+*.xlsx
+*.xls
+*.json

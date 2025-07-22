@@ -1,0 +1,9 @@
+# 数英网公司项目页面列表
+# 格式：URL,最大页数（可选，默认16页）
+# 以#开头的行会被忽略
+
+https://www.digitaling.com/company/projects/11001,16
+https://www.digitaling.com/company/projects/11198,32
+https://www.digitaling.com/company/projects/11997,19
+https://www.digitaling.com/company/projects/11223,9
+https://www.digitaling.com/company/projects/11000,13
