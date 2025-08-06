@@ -1,0 +1,12 @@
+# 数英网项目详情页URL列表
+# 格式：每行一个项目URL
+# 以#开头的行会被忽略
+
+https://www.digitaling.com/projects/342467.html
+https://www.digitaling.com/projects/341641.html
+https://www.digitaling.com/projects/340696.html
+https://www.digitaling.com/projects/333612.html
+https://www.digitaling.com/projects/328656.html
+https://www.digitaling.com/projects/327151.html
+
+

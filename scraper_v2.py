@@ -556,18 +556,25 @@ class DigitalingSeleniumScraper:
 
         # 创建Excel写入器
         with pd.ExcelWriter(filename, engine='openpyxl') as writer:
-            # 创建汇总sheet
+            # 收集所有项目数据用于合并
+            all_projects_combined = []
             summary_data = []
 
             for company_name, projects in all_company_data.items():
                 # 创建DataFrame
                 df = pd.DataFrame(projects)
 
+                # 为每个项目添加公司名称字段
+                df['公司名称'] = company_name
+
                 # 重新排列列的顺序
-                column_order = ['title', 'link', 'brand', 'agency', 'publish_date', 'description', 'image_url', 'likes']
+                column_order = ['公司名称', 'title', 'link', 'brand', 'agency', 'publish_date', 'description', 'image_url', 'likes']
                 existing_columns = [col for col in column_order if col in df.columns]
                 other_columns = [col for col in df.columns if col not in column_order]
                 df = df[existing_columns + other_columns]
+
+                # 添加到合并列表中
+                all_projects_combined.append(df)
 
                 # 清理sheet名称（Excel sheet名称有限制）
                 sheet_name = re.sub(r'[^\w\s-]', '', company_name)[:31]  # Excel sheet名最多31字符
@@ -601,12 +608,33 @@ class DigitalingSeleniumScraper:
                     '最晚发布时间': self.safe_date_max(df['publish_date']) if 'publish_date' in df.columns else ''
                 })
 
-            # 创建汇总sheet
-            summary_df = pd.DataFrame(summary_data)
-            summary_df.to_excel(writer, sheet_name='汇总', index=False)
+            # 创建合并所有项目的sheet
+            if all_projects_combined:
+                combined_df = pd.concat(all_projects_combined, ignore_index=True)
+                combined_df.to_excel(writer, sheet_name='所有项目合并', index=False)
+                
+                # 调整合并sheet的列宽
+                combined_sheet = writer.sheets['所有项目合并']
+                for column in combined_sheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
 
-            # 调整汇总sheet的列宽
-            summary_sheet = writer.sheets['汇总']
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+
+                    adjusted_width = min(max(max_length + 2, 10), 50)
+                    combined_sheet.column_dimensions[column_letter].width = adjusted_width
+
+            # 创建统计汇总sheet
+            summary_df = pd.DataFrame(summary_data)
+            summary_df.to_excel(writer, sheet_name='统计汇总', index=False)
+
+            # 调整统计汇总sheet的列宽
+            summary_sheet = writer.sheets['统计汇总']
             for column in summary_sheet.columns:
                 max_length = 0
                 column_letter = column[0].column_letter
@@ -621,8 +649,11 @@ class DigitalingSeleniumScraper:
                 adjusted_width = min(max(max_length + 2, 10), 30)
                 summary_sheet.column_dimensions[column_letter].width = adjusted_width
 
+        total_projects = sum(len(projects) for projects in all_company_data.values())
         print(f"\n✓ Excel文件已更新: {filename}")
         print(f"  - 包含 {len(all_company_data)} 个公司的数据")
+        print(f"  - 总计 {total_projects} 个项目")
+        print(f"  - 各公司分sheet + 所有项目合并sheet + 统计汇总sheet")
 
     def safe_date_min(self, date_series):
         """安全地获取日期最小值"""
