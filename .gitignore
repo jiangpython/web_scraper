@@ -2,3 +2,4 @@ venv/
 *.xlsx
 *.xls
 *.json
+downloaded_videos/

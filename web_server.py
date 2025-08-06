@@ -117,7 +117,7 @@ class ChatManager:
 
 # 创建管理器实例
 data_manager = DataManager()
-chat_manager = ChatManager()
+chat_manager = None  # 延迟初始化
 
 @app.route('/')
 def index():
@@ -165,6 +165,19 @@ def refresh_data():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """API接口 - 聊天对话"""
+    global chat_manager
+    
+    # 确保chat_manager已初始化
+    if chat_manager is None:
+        try:
+            chat_manager = ChatManager()
+        except Exception as e:
+            print(f"ChatManager初始化失败: {e}")
+            return jsonify({
+                "success": False,
+                "response": "智能助手未初始化，请检查Gemini API配置。"
+            }), 500
+    
     try:
         data = request.get_json()
         if not data or 'message' not in data:
@@ -213,6 +226,8 @@ def internal_error(error):
 
 def main():
     """主函数"""
+    global chat_manager
+    
     print("=" * 60)
     print("数英网项目数据面板 Web 服务器")
     print("=" * 60)
@@ -229,13 +244,21 @@ def main():
         print("数据文件不存在，正在初始化数据...")
         data_manager.refresh_data()
     
+    # 在这里初始化ChatManager
+    try:
+        chat_manager = ChatManager()
+        chat_status = "可用"
+    except Exception as e:
+        print(f"ChatManager初始化失败: {e}")
+        chat_status = "不可用 - 请检查Gemini API配置"
+    
     print(f"\n服务器启动信息:")
     print(f"  - 访问地址: http://localhost:5000")
     print(f"  - 数据面板: http://localhost:5000")
     print(f"  - API状态: http://localhost:5000/api/status")
     print(f"  - 聊天API: http://localhost:5000/api/chat")
     print(f"  - 当前数据: {data_manager.get_current_data()}")
-    print(f"  - 聊天状态: {'可用' if chat_manager.assistant else '不可用'}")
+    print(f"  - 聊天状态: {chat_status}")
     print("\n按 Ctrl+C 停止服务器")
     print("=" * 60)
     
