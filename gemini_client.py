@@ -1,6 +1,6 @@
 """
 Gemini API 客户端
-处理自然语言查询解析和回答生成
+处理自然语言查询解析和回答生成（已迁移至 google-genai 客户端接口）
 """
 
 import json
@@ -8,7 +8,8 @@ import re
 import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dataclasses import dataclass
 
 
@@ -23,31 +24,36 @@ class QueryIntent:
 
 
 class GeminiClient:
-    """Gemini API 客户端"""
-    
-    def __init__(self, api_key: str = None):
+    """Gemini API 客户端（google-genai）"""
+
+    def __init__(self, api_key: str = None, model_name: str = "gemini-2.5-flash"):
         """
         初始化Gemini客户端
-        
+
         Args:
             api_key: Gemini API密钥
+            model_name: 使用的模型名称，默认 gemini-2.5-flash
         """
         # 从环境变量或参数获取API密钥
         self.api_key = api_key or os.getenv('GEMINI_API_KEY')
-        
+
         if not self.api_key:
             raise ValueError("需要提供Gemini API密钥。请设置GEMINI_API_KEY环境变量或传入api_key参数")
-        
-        # 配置Gemini
-        genai.configure(api_key=self.api_key)
-        
-        # 初始化模型
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
-        
+
+        # 初始化新客户端
+        self.client = genai.Client(api_key=self.api_key)
+        self.model_name = model_name
+
         # 对话历史
-        self.conversation_history = []
-        
-        print("Gemini client initialized successfully")
+        self.conversation_history: List[Dict[str, Any]] = []
+
+        print(f"Gemini client initialized successfully (model={self.model_name})")
+
+    def _default_generate_config(self) -> types.GenerateContentConfig:
+        """生成默认的内容生成配置（禁用 thinking，可按需扩展）。"""
+        return types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(thinking_budget=0)
+        )
     
     def analyze_query(self, user_query: str, context: str = "") -> QueryIntent:
         """
@@ -64,8 +70,12 @@ class GeminiClient:
         prompt = self._build_analysis_prompt(user_query, context)
         
         try:
-            # 调用Gemini API
-            response = self.model.generate_content(prompt)
+            # 调用Gemini API（新接口）
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=self._default_generate_config()
+            )
             
             # 解析响应
             result = self._parse_analysis_result(response.text, user_query)
@@ -101,8 +111,12 @@ class GeminiClient:
         prompt = self._build_answer_prompt(query, search_results, query_info)
         
         try:
-            # 调用Gemini API
-            response = self.model.generate_content(prompt)
+            # 调用Gemini API（新接口）
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=self._default_generate_config()
+            )
             
             # 添加到对话历史
             self.conversation_history.append({
@@ -309,9 +323,10 @@ class GeminiClient:
             AI响应文本
         """
         try:
-            response = self.model.generate_content(
-                prompt,
-                request_options={"timeout": 30}  # 设置30秒超时
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=self._default_generate_config()
             )
             return response.text
         except Exception as e:
@@ -324,7 +339,11 @@ class GeminiClient:
     def test_connection(self) -> bool:
         """测试Gemini API连接"""
         try:
-            response = self.model.generate_content("你好，请回复'连接成功'")
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents="你好，请回复'连接成功'",
+                config=self._default_generate_config()
+            )
             return "连接" in response.text or "成功" in response.text
         except Exception as e:
             print(f"❌ Gemini API连接测试失败: {e}")

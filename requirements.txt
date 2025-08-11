@@ -5,3 +5,4 @@ lxml
 openpyxl
 pandas
 psutil
+google-genai>=0.3.0

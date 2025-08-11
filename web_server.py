@@ -184,23 +184,50 @@ class ChatManager:
         try:
             from smart_ai_assistant import SmartAIAssistant
             print("ChatManager: 正在初始化 SmartAIAssistant...")
-            self.assistant = SmartAIAssistant()
+            # 注意：这里只做默认初始化，实际选择在chat接口中处理
+            self.assistant = SmartAIAssistant() # 默认使用Gemini
             if self.assistant.ready:
-                print("ChatManager: SmartAIAssistant 初始化成功。")
+                print("ChatManager: 默认(Gemini) SmartAIAssistant 初始化成功。")
             else:
-                print("ChatManager: SmartAIAssistant 初始化失败。")
+                print("ChatManager: 默认(Gemini) SmartAIAssistant 初始化失败。")
         except Exception as e:
             print(f"ChatManager: 初始化失败 - {e}")
             self.assistant = None
 
-    def chat_in_background(self, message: str, history: list) -> dict:
+    def get_assistant(self, model_provider: str = 'gemini'):
+        """根据模型提供商获取或创建助手实例"""
+        if model_provider == 'gemini':
+            # 复用默认实例
+            if self.assistant and self.assistant.model_provider == 'gemini':
+                if not self.assistant.ready: # 尝试重新初始化
+                    self.initialize_assistant()
+                return self.assistant
+            else: # 如果默认实例不是gemini，则新建
+                from smart_ai_assistant import SmartAIAssistant
+                return SmartAIAssistant(model_provider='gemini')
+
+        elif model_provider == 'deepseek':
+            # deepseek总是创建一个新的实例，因为它可能依赖不同的API KEY
+            # (如果需要，这里可以添加缓存逻辑)
+            from smart_ai_assistant import SmartAIAssistant
+            print(f"为 deepseek 创建新的助手实例...")
+            return SmartAIAssistant(model_provider='deepseek')
+        
+        else:
+            print(f"不支持的模型: {model_provider}，返回默认助手。")
+            return self.assistant
+
+
+    def chat_in_background(self, message: str, history: list, model_provider: str) -> dict:
         """在后台线程中处理聊天消息"""
         try:
-            if not self.assistant or not self.assistant.ready:
-                return {"success": False, "response": "AI助手未就绪，请稍后重试。"}
+            assistant = self.get_assistant(model_provider)
+
+            if not assistant or not assistant.ready:
+                return {"success": False, "response": f"AI助手({model_provider})未就绪，请稍后重试。"}
             
-            print(f"[BG_THREAD] 开始处理: '{message}'")
-            response = self.assistant.process_query(message, history)
+            print(f"[BG_THREAD] 使用 {model_provider} 模型开始处理: '{message}'")
+            response = assistant.process_query(message, history)
             print(f"[BG_THREAD] 处理完成，返回响应。")
             return {"success": True, "response": response}
         except Exception as e:
@@ -216,12 +243,13 @@ def chat():
         data = request.get_json()
         message = data.get('message', '').strip()
         history = data.get('history', []) # 从前端获取历史记录
+        model_provider = data.get('model', 'gemini').lower() # 获取模型选择，默认为gemini
 
         if not message:
             return jsonify({"success": False, "response": "消息内容不能为空"}), 400
 
         # 将AI调用提交到线程池
-        future = executor.submit(chat_manager.chat_in_background, message, history)
+        future = executor.submit(chat_manager.chat_in_background, message, history, model_provider)
         
         # 等待结果（设置超时）
         try:

@@ -3,3 +3,4 @@ venv/
 *.xls
 *.json
 downloaded_videos/
+config.env
