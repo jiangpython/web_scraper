@@ -14,6 +14,7 @@ import re
 
 from prompt_manager import PromptManager
 from gemini_client import GeminiClient
+from deepseek_client import DeepSeekClient
 from config_optimized import get_config
 
 class ContentLengthManager:
@@ -335,23 +336,35 @@ class SmartQueryExecutor:
 class SmartAIAssistant:
     """智能AI助手 - 简化版"""
     
-    def __init__(self, gemini_api_key: str = None):
+    def __init__(self, model_provider: str = "gemini", gemini_api_key: str = None, deepseek_api_key: str = None):
         self.prompt_manager = PromptManager()
         self.query_executor = SmartQueryExecutor()
         self.config = get_config()
         self.max_history_length = self.config.get_int('MAX_CHAT_HISTORY', 5)
+        self.model_provider = model_provider
+        self.client = None
+        self.ready = False
 
-        # 初始化Gemini客户端
         try:
-            if not gemini_api_key:
-                gemini_api_key = self.config.get('GEMINI_API_KEY')
-            
-            self.gemini_client = GeminiClient(gemini_api_key)
-            self.ready = True
-            
+            if self.model_provider == "gemini":
+                api_key = gemini_api_key or self.config.get('GEMINI_API_KEY')
+                self.client = GeminiClient(api_key=api_key)
+            elif self.model_provider == "deepseek":
+                api_key = deepseek_api_key or self.config.get('DEEPSEEK_API_KEY')
+                self.client = DeepSeekClient(api_key=api_key)
+            else:
+                raise ValueError(f"不支持的模型提供商: {self.model_provider}")
+
+            if self.client:
+                # 假设所有客户端都有一个 ready 属性或类似的连接测试
+                self.ready = self.client.test_connection() if hasattr(self.client, 'test_connection') else True
+
+            if not self.ready:
+                 print(f"{model_provider.capitalize()} 客户端连接测试失败或未准备就绪。")
+
         except Exception as e:
-            print(f"AI客户端初始化失败: {e}")
-            self.gemini_client = None
+            print(f"AI客户端 ({self.model_provider}) 初始化失败: {e}")
+            self.client = None
             self.ready = False
     
     def process_query(self, user_query: str, history: List[Dict[str, str]] = None) -> str:
@@ -366,6 +379,10 @@ class SmartAIAssistant:
             if len(history) > self.max_history_length * 2 : # 每个对话是2条记录
                 history = history[-(self.max_history_length * 2):]
 
+            # Deepseek client 需要 history
+            if self.model_provider == 'deepseek':
+                return self.client.generate_response(user_query, history=history)
+
             formatted_history = self._format_history(history)
 
             print(f"\n{'=' * 50}")
@@ -378,7 +395,7 @@ class SmartAIAssistant:
             analysis_prompt = self.prompt_manager.get_query_analysis_prompt(user_query, formatted_history)
             
             # 2. AI分析用户查询，生成查询指令
-            ai_response = self.gemini_client.generate_response(analysis_prompt)
+            ai_response = self.client.generate_response(analysis_prompt)
             
             # 3. 解析AI响应
             query_instruction = self._parse_ai_response(ai_response)
@@ -493,7 +510,7 @@ class SmartAIAssistant:
             print(f"\n[AI Assistant] 最终回答生成提示词 (前400字符):\n{answer_prompt[:400]}...")
 
             # AI生成最终回答
-            final_answer = self.gemini_client.generate_response(answer_prompt)
+            final_answer = self.client.generate_response(answer_prompt)
             
             # 如果有分页信息，添加分页提示
             if query_results.get("has_more", False):

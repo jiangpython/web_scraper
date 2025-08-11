@@ -161,6 +161,20 @@
             font-weight: 600;
         }
 
+        .model-selector-container {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #34495e;
+        }
+
+        #modelSelector {
+            padding: 4px 8px;
+            border-radius: 5px;
+            border: 1px solid #bdc3c7;
+            background-color: #ecf0f1;
+            margin-left: 5px;
+        }
+
         .clear-chat-btn {
             background: #ecf0f1;
             border: 1px solid #bdc3c7;
@@ -185,27 +199,32 @@
             padding: 15px;
             margin-bottom: 15px;
             background: #f8f9fa;
+            /* -- 新增样式 -- */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .chat-message {
-            margin-bottom: 15px;
+            /* margin-bottom 被 .chat-container 的 gap 替代 */
             padding: 10px 15px;
             border-radius: 10px;
             max-width: 80%;
+            word-wrap: break-word; /* 确保长单词或无空格字符串可以换行 */
         }
 
         .user-message {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
-            margin-left: auto;
-            text-align: right;
+            align-self: flex-end; /* 靠右对齐 */
+            text-align: left; /* 气泡内文本依然左对齐，便于阅读 */
         }
 
         .ai-message {
             background: white;
             color: #2c3e50;
             border: 1px solid #e9ecef;
-            margin-right: auto;
+            align-self: flex-start; /* 靠左对齐 */
             line-height: 1.6;
         }
 
@@ -445,6 +464,13 @@
         <div class="chat-panel">
             <div class="chat-header">
                 <span>🤖 智能AI助手</span>
+                <div class="model-selector-container">
+                    <label for="modelSelector">选择模型: </label>
+                    <select id="modelSelector">
+                        <option value="gemini" selected>Gemini</option>
+                        <option value="deepseek">DeepSeek</option>
+                    </select>
+                </div>
                 <button class="clear-chat-btn" onclick="clearChat()">清除记录</button>
             </div>
             <div class="chat-container" id="chatContainer">
@@ -560,6 +586,7 @@
         function sendMessage() {
             const input = document.getElementById('chatInput');
             const sendBtn = document.getElementById('sendBtn');
+            const modelSelector = document.getElementById('modelSelector');
             const message = input.value.trim();
             
             if (!message) return;
@@ -575,7 +602,11 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ message: message, history: chatHistory.slice(0, -1) }) // 发送除当前消息外的历史记录
+                body: JSON.stringify({ 
+                    message: message, 
+                    history: chatHistory.slice(0, -1), // 发送除当前消息外的历史记录
+                    model: modelSelector.value // 添加选择的模型
+                })
             })
             .then(response => response.json())
             .then(data => {
