@@ -6,6 +6,46 @@
 import os
 from typing import Dict, Any
 
+
+def load_env_file(env_file: str = "config.env"):
+    """
+    从.env文件加载环境变量。
+    通过定位当前文件位置来确保总能找到项目根目录下的.env文件。
+    """
+    try:
+        # 获取当前脚本 (config_optimized.py) 所在的目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # 项目根目录就是当前目录
+        project_root = current_dir
+        env_path = os.path.join(project_root, env_file)
+
+        print(f"[ENV] 正在尝试从以下路径加载 '{env_file}': {env_path}")
+
+        if not os.path.exists(env_path):
+            print(f"[ENV] 警告: 环境配置文件不存在于 '{env_path}'")
+            return
+
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    os.environ[key] = value
+                    # 打印部分加载的键以供调试，但不打印值
+                    if "KEY" in key or "SECRET" in key:
+                        print(f"  - 加载了环境变量: {key}")
+                    else:
+                        print(f"  - 加载了环境变量: {key}={value}")
+        print(f"[ENV] 成功从 '{env_path}' 加载环境变量。")
+    except Exception as e:
+        print(f"[ENV] 加载环境配置文件时发生严重错误: {e}")
+
+
+# 自动加载环境变量
+load_env_file()
+
 # 爬虫基本设置
 SCRAPER_CONFIG = {
     "headless": True,  # 是否无头模式
@@ -82,10 +122,10 @@ DIGITALING_CONFIG = {
 # 文件路径设置
 FILE_PATHS = {
     "urls_file": "project_urls.txt",
-    "summary_file": "output/projects_summary.json",
+    "summary_file": "output/projects_index.json",
     "metadata_file": "output/metadata.json",
     "progress_file": "output/scrape_progress.json",
-    "batch_index_file": "output/details/batch_index.json",
+    "batch_index_file": "output/details/batch_metadata.json",
     "logs_dir": "output/logs",
     "details_dir": "output/details",
 }
@@ -308,3 +348,45 @@ def apply_preset(preset_name: str) -> bool:
             DELAY_CONFIG[key] = value
     
     return True
+
+
+class Config:
+    """配置类，支持多种数据类型获取"""
+    
+    def __init__(self):
+        # 从环境变量或使用默认值
+        self._config = {
+            'SERVER_HOST': os.getenv('SERVER_HOST', '0.0.0.0'),
+            'SERVER_PORT': os.getenv('SERVER_PORT', '5000'),
+            'DEBUG_MODE': os.getenv('DEBUG_MODE', 'False'),
+            'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY'),
+        }
+    
+    def get(self, key: str, default: str = None) -> str:
+        """获取字符串配置值"""
+        return self._config.get(key, default)
+    
+    def get_int(self, key: str, default: int = 0) -> int:
+        """获取整数配置值"""
+        value = self._config.get(key, str(default))
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return default
+    
+    def get_bool(self, key: str, default: bool = False) -> bool:
+        """获取布尔配置值"""
+        value = self._config.get(key, str(default))
+        if isinstance(value, bool):
+            return value
+        return str(value).lower() in ('true', '1', 'yes', 'on')
+
+
+def get_config() -> Config:
+    """
+    获取配置对象
+    
+    Returns:
+        Config: 配置对象实例
+    """
+    return Config()

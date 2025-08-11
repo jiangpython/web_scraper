@@ -47,7 +47,7 @@ class GeminiClient:
         # 对话历史
         self.conversation_history = []
         
-        print("✅ Gemini客户端初始化成功")
+        print("Gemini client initialized successfully")
     
     def analyze_query(self, user_query: str, context: str = "") -> QueryIntent:
         """
@@ -298,6 +298,29 @@ class GeminiClient:
         self.conversation_history = []
         print("✅ 对话历史已清空")
     
+    def generate_response(self, prompt: str) -> str:
+        """
+        生成AI响应（通用方法）
+        
+        Args:
+            prompt: 提示词
+            
+        Returns:
+            AI响应文本
+        """
+        try:
+            response = self.model.generate_content(
+                prompt,
+                request_options={"timeout": 30}  # 设置30秒超时
+            )
+            return response.text
+        except Exception as e:
+            print(f"❌ Gemini响应生成失败: {e}")
+            # 检查是否是超时错误
+            if "DeadlineExceeded" in str(e):
+                return "AI服务响应超时，请稍后重试或简化您的问题。"
+            return "很抱歉，AI服务暂时不可用，请稍后重试。"
+
     def test_connection(self) -> bool:
         """测试Gemini API连接"""
         try:

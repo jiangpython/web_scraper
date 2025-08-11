@@ -138,8 +138,35 @@ class DriverPool:
         
         print(f"WebDriver连接池初始化完成，可用连接数: {self.available_drivers.qsize()}")
     
-    @contextmanager
     def get_driver(self, timeout=30):
+        """
+        获取WebDriver
+        
+        Args:
+            timeout: 获取超时时间（秒）
+            
+        Returns:
+            WebDriver实例
+        """
+        # 尝试从池中获取可用驱动
+        try:
+            driver = self.available_drivers.get(timeout=timeout)
+        except Empty:
+            # 如果池为空，创建新驱动
+            print("⚠ 连接池为空，创建新的WebDriver...")
+            driver = self._create_driver()
+        
+        # 标记为忙碌状态
+        with self.lock:
+            self.busy_drivers.add(driver)
+        
+        # 更新使用时间
+        driver.last_used = time.time()
+        
+        return driver
+    
+    @contextmanager
+    def get_driver_context(self, timeout=30):
         """
         获取WebDriver（上下文管理器）
         
@@ -147,32 +174,21 @@ class DriverPool:
             timeout: 获取超时时间（秒）
             
         Usage:
-            with pool.get_driver() as driver:
+            with pool.get_driver_context() as driver:
                 driver.get("https://example.com")
         """
         driver = None
         try:
-            # 尝试从池中获取可用驱动
-            try:
-                driver = self.available_drivers.get(timeout=timeout)
-            except Empty:
-                # 如果池为空，创建新驱动
-                print("⚠ 连接池为空，创建新的WebDriver...")
-                driver = self._create_driver()
-            
-            # 标记为忙碌状态
-            with self.lock:
-                self.busy_drivers.add(driver)
-            
-            # 更新使用时间
-            driver.last_used = time.time()
-            
+            driver = self.get_driver(timeout)
             yield driver
-            
         finally:
             if driver:
                 # 归还驱动到池中
                 self._return_driver(driver)
+    
+    def return_driver(self, driver):
+        """公共方法：归还WebDriver到池中"""
+        self._return_driver(driver)
     
     def _return_driver(self, driver):
         """归还WebDriver到池中"""
