@@ -1,8 +1,27 @@
-requests
-beautifulsoup4
-selenium
-lxml
-openpyxl
-pandas
-psutil
-google-genai>=0.3.0
+# AI助手核心依赖
+requests>=2.28.0
+pandas>=1.5.0
+google-generativeai>=0.3.0
+
+# 数据处理
+openpyxl>=3.0.0
+numpy>=1.21.0
+
+# Web服务（可选）
+Flask>=2.2.0
+Flask-Cors>=4.0.0
+
+# 系统工具
+psutil>=5.9.0
+
+# 打包工具
+PyInstaller>=5.0.0
+
+# 开发和调试工具（可选）
+colorama>=0.4.0
+tqdm>=4.64.0
+
+# 以下是原爬虫项目依赖（AI助手不必需，但保留兼容性）
+beautifulsoup4>=4.11.0
+selenium>=4.8.0
+lxml>=4.9.0

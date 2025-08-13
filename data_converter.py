@@ -190,24 +190,29 @@ class DataConverter:
                 project_id = project.get('id')
                 
                 # 品牌索引
-                if project.get('brand'):
-                    brand_index[project['brand'].lower()].append(project_id)
+                brand = project.get('brand')
+                if brand and isinstance(brand, str) and brand.strip():
+                    brand_index[brand.lower()].append(project_id)
                 
                 # 代理商索引
-                if project.get('agency'):
-                    agency_index[project['agency'].lower()].append(project_id)
+                agency = project.get('agency')
+                if agency and isinstance(agency, str) and agency.strip():
+                    agency_index[agency.lower()].append(project_id)
                 
                 # 分类索引
-                if project.get('category'):
-                    category_index[project['category'].lower()].append(project_id)
+                category = project.get('category')
+                if category and isinstance(category, str) and category.strip():
+                    category_index[category.lower()].append(project_id)
                 
                 # 行业索引
-                if project.get('industry'):
-                    industry_index[project['industry'].lower()].append(project_id)
+                industry = project.get('industry')
+                if industry and isinstance(industry, str) and industry.strip():
+                    industry_index[industry.lower()].append(project_id)
                 
                 # 营销类型索引
-                if project.get('campaign_type'):
-                    campaign_type_index[project['campaign_type'].lower()].append(project_id)
+                campaign_type = project.get('campaign_type')
+                if campaign_type and isinstance(campaign_type, str) and campaign_type.strip():
+                    campaign_type_index[campaign_type.lower()].append(project_id)
                 
                 # 关键词索引
                 keywords = project.get('keywords', [])

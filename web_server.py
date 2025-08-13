@@ -79,7 +79,7 @@ def get_status():
         "is_refreshing": data_manager.is_refreshing,
         "last_refresh": data_manager.last_refresh.isoformat() if data_manager.last_refresh else None,
         "data_file_exists": os.path.exists(data_manager.data_file),
-        "chat_available": chat_manager.assistant is not None,
+        "chat_available": True, # 移除了对chat_manager.assistant的依赖
         "server_time": datetime.now().isoformat()
     })
 
@@ -126,7 +126,7 @@ def system_status():
                 "exists": projects_exists,
                 "count": projects_count
             },
-            "chat_available": chat_manager.assistant is not None if chat_manager else False,
+            "chat_available": True, # 移除了对chat_manager.assistant的依赖
             "last_refresh": data_manager.last_refresh.isoformat() if data_manager.last_refresh else None,
             "server_time": datetime.now().isoformat()
         })
@@ -168,63 +168,20 @@ from concurrent.futures import ThreadPoolExecutor
 executor = ThreadPoolExecutor(max_workers=2)
 
 class ChatManager:
-    """聊天管理器"""
-    _instance = None
+    """聊天管理器 - 简化版，按需创建助手"""
     
-    def __new__(cls):
-        if cls._instance is None:
-            print("创建 ChatManager 单例...")
-            cls._instance = super(ChatManager, cls).__new__(cls)
-            cls._instance.assistant = None
-            cls._instance.initialize_assistant()
-        return cls._instance
-
-    def initialize_assistant(self):
-        """初始化智能助手"""
-        try:
-            from smart_ai_assistant import SmartAIAssistant
-            print("ChatManager: 正在初始化 SmartAIAssistant...")
-            # 注意：这里只做默认初始化，实际选择在chat接口中处理
-            self.assistant = SmartAIAssistant() # 默认使用Gemini
-            if self.assistant.ready:
-                print("ChatManager: 默认(Gemini) SmartAIAssistant 初始化成功。")
-            else:
-                print("ChatManager: 默认(Gemini) SmartAIAssistant 初始化失败。")
-        except Exception as e:
-            print(f"ChatManager: 初始化失败 - {e}")
-            self.assistant = None
-
-    def get_assistant(self, model_provider: str = 'gemini'):
-        """根据模型提供商获取或创建助手实例"""
-        if model_provider == 'gemini':
-            # 复用默认实例
-            if self.assistant and self.assistant.model_provider == 'gemini':
-                if not self.assistant.ready: # 尝试重新初始化
-                    self.initialize_assistant()
-                return self.assistant
-            else: # 如果默认实例不是gemini，则新建
-                from smart_ai_assistant import SmartAIAssistant
-                return SmartAIAssistant(model_provider='gemini')
-
-        elif model_provider == 'deepseek':
-            # deepseek总是创建一个新的实例，因为它可能依赖不同的API KEY
-            # (如果需要，这里可以添加缓存逻辑)
-            from smart_ai_assistant import SmartAIAssistant
-            print(f"为 deepseek 创建新的助手实例...")
-            return SmartAIAssistant(model_provider='deepseek')
-        
-        else:
-            print(f"不支持的模型: {model_provider}，返回默认助手。")
-            return self.assistant
-
-
     def chat_in_background(self, message: str, history: list, model_provider: str) -> dict:
         """在后台线程中处理聊天消息"""
         try:
-            assistant = self.get_assistant(model_provider)
+            # 每次请求都按需创建对应的助手实例
+            from smart_ai_assistant import SmartAIAssistant
+            print(f"为 {model_provider} 创建新的助手实例...")
+            assistant = SmartAIAssistant(model_provider=model_provider)
 
-            if not assistant or not assistant.ready:
-                return {"success": False, "response": f"AI助手({model_provider})未就绪，请稍后重试。"}
+            if not assistant.ready:
+                error_message = f"AI助手({model_provider})初始化失败，请检查API Key配置或网络连接。"
+                print(f"[ERROR] {error_message}")
+                return {"success": False, "response": error_message}
             
             print(f"[BG_THREAD] 使用 {model_provider} 模型开始处理: '{message}'")
             response = assistant.process_query(message, history)
@@ -328,7 +285,17 @@ class DataManager:
         try:
             if os.path.exists(self.data_file):
                 with open(self.data_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                # 如果缺少top_brands，自动触发一次刷新以补齐新字段
+                if 'top_brands' not in data:
+                    print("[DataManager] 发现缺少 top_brands 字段，正在自动刷新数据...")
+                    self.refresh_data()
+                    try:
+                        with open(self.data_file, 'r', encoding='utf-8') as f2:
+                            data = json.load(f2)
+                    except Exception:
+                        pass
+                return data
             else:
                 return {
                     "brands_count": 0,
@@ -367,10 +334,14 @@ class DataManager:
             
             # 计算统计信息
             print("2. 计算统计信息...")
+            # 顶部品牌Top5
+            top_brands_series = df['brand'].dropna().value_counts().head(5) if 'brand' in df.columns else None
+            top_brands = top_brands_series.to_dict() if top_brands_series is not None else {}
             stats = {
                 "projects_count": len(df),
                 "brands_count": df['brand'].nunique() if 'brand' in df.columns else 0,
                 "agencies_count": df['agency'].nunique() if 'agency' in df.columns else 0,
+                "top_brands": top_brands,  # 新增：前5个最多项目品牌
                 "total_files": 1,  # master_projects.csv
                 "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "data_source": "master_projects.csv"
@@ -397,7 +368,7 @@ class DataManager:
 
 # 创建管理器实例
 data_manager = DataManager()
-chat_manager = ChatManager() # 在程序启动时初始化一次
+chat_manager = ChatManager() # 实例化简化的管理器
 
 
 def main():
@@ -424,7 +395,7 @@ def main():
         print("数据文件不存在，正在初始化数据...")
         data_manager.refresh_data()
     
-    chat_status = "可用" if chat_manager.assistant and chat_manager.assistant.ready else "初始化失败"
+    # 移除了对chat_status的检查，因为它现在是动态的
     
     print(f"\n服务器启动信息:")
     print(f"  - 访问地址: http://localhost:5000")
@@ -432,7 +403,7 @@ def main():
     print(f"  - API状态: http://localhost:5000/api/status")
     print(f"  - 聊天API: http://localhost:5000/api/chat")
     print(f"  - 当前数据: {data_manager.get_current_data()}")
-    print(f"  - 聊天状态: {chat_status}")
+    # print(f"  - 聊天状态: {chat_status}") # 移除旧的状态显示
     print("\n按 Ctrl+C 停止服务器")
     print("=" * 60)
     

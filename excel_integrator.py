@@ -22,6 +22,14 @@ class ExcelIntegrator:
             'duplicates_removed': 0
         }
     
+    def _clean_field_value(self, value):
+        """清理字段值，确保返回字符串"""
+        if pd.isna(value):
+            return ""
+        if not isinstance(value, str):
+            return str(value)
+        return value.strip()
+    
     def extract_project_id(self, url):
         """从URL中提取项目ID"""
         if pd.isna(url) or not isinstance(url, str):
@@ -95,14 +103,14 @@ class ExcelIntegrator:
                 if not project_id:
                     continue
                 
-                # 创建项目记录
+                # 创建项目记录 - 确保所有字段都是字符串类型
                 project_record = {
                     'project_id': project_id,
-                    'url': row.get('link', ''),
-                    'brand': row.get('brand', ''),
-                    'agency': row.get('agency', ''),
-                    'title': row.get('title', ''),
-                    'publish_date': row.get('publish_date', ''),
+                    'url': self._clean_field_value(row.get('link', '')),
+                    'brand': self._clean_field_value(row.get('brand', '')),
+                    'agency': self._clean_field_value(row.get('agency', '')),
+                    'title': self._clean_field_value(row.get('title', '')),
+                    'publish_date': self._clean_field_value(row.get('publish_date', '')),
                     'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
                 

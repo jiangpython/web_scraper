@@ -64,6 +64,14 @@ class SmartQueryExecutor:
             # 加载主数据文件
             if os.path.exists('master_projects.csv'):
                 self.master_df = pd.read_csv('master_projects.csv')
+                
+                # 处理字符串字段中的NaN值，确保数据类型一致性
+                string_columns = ['brand', 'agency', 'title', 'publish_date', 'url']
+                for col in string_columns:
+                    if col in self.master_df.columns:
+                        # 将NaN值填充为空字符串，确保列中只有字符串类型
+                        self.master_df[col] = self.master_df[col].fillna('').astype(str)
+                
                 print(f"成功加载主数据: {len(self.master_df)} 个项目")
             else:
                 print("警告: master_projects.csv 不存在")
@@ -289,9 +297,21 @@ class SmartQueryExecutor:
             elif isinstance(condition, dict):
                 # 复杂条件（如日期范围）
                 if "start" in condition and field == "publish_date":
-                    df = df[pd.to_datetime(df[field], errors='coerce') >= pd.to_datetime(condition["start"])]
+                    try:
+                        date_series = pd.to_datetime(df[field], errors='coerce')
+                        start_date = pd.to_datetime(condition["start"])
+                        df = df[date_series >= start_date]
+                    except Exception as e:
+                        print(f"日期过滤错误 (start): {e}")
+                        continue
                 if "end" in condition and field == "publish_date":
-                    df = df[pd.to_datetime(df[field], errors='coerce') <= pd.to_datetime(condition["end"])]
+                    try:
+                        date_series = pd.to_datetime(df[field], errors='coerce') 
+                        end_date = pd.to_datetime(condition["end"])
+                        df = df[date_series <= end_date]
+                    except Exception as e:
+                        print(f"日期过滤错误 (end): {e}")
+                        continue
         
         return df
     
@@ -378,10 +398,6 @@ class SmartAIAssistant:
             # 限制历史记录长度
             if len(history) > self.max_history_length * 2 : # 每个对话是2条记录
                 history = history[-(self.max_history_length * 2):]
-
-            # Deepseek client 需要 history
-            if self.model_provider == 'deepseek':
-                return self.client.generate_response(user_query, history=history)
 
             formatted_history = self._format_history(history)
 
@@ -560,9 +576,20 @@ class SmartAIAssistant:
 
         # 4. 截断排行榜，放宽到20个
         if "top_brands" in simplified and simplified["top_brands"]:
-            simplified["top_brands"] = simplified["top_brands"][:20] 
+            if isinstance(simplified["top_brands"], list):
+                simplified["top_brands"] = simplified["top_brands"][:20]
+            elif isinstance(simplified["top_brands"], dict):
+                # 如果是字典，转换为列表并截断
+                brand_items = list(simplified["top_brands"].items())
+                simplified["top_brands"] = brand_items[:20]
+        
         if "top_agencies" in simplified and simplified["top_agencies"]:
-            simplified["top_agencies"] = simplified["top_agencies"][:20]
+            if isinstance(simplified["top_agencies"], list):
+                simplified["top_agencies"] = simplified["top_agencies"][:20]
+            elif isinstance(simplified["top_agencies"], dict):
+                # 如果是字典，转换为列表并截断
+                agency_items = list(simplified["top_agencies"].items())
+                simplified["top_agencies"] = agency_items[:20]
 
         return simplified
 

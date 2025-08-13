@@ -5,3 +5,4 @@ venv/
 downloaded_videos/
 config.env
 scraped_projects.csv
+网页爬虫_重构版/

@@ -1,55 +1,62 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 cls
 
 echo ======================================================
-echo  数英网项目数据面板 - Web 服务器
+echo  ShuYing Project Data Panel - Web Server
 echo ======================================================
 echo.
 
-echo [INFO] 当前目录: %CD%
-echo [INFO] 切换到项目目录...
+echo [INFO] Current directory: %CD%
+echo [INFO] Changing to script directory...
 cd /d "%~dp0"
-echo [INFO] 项目目录: %CD%
+echo [INFO] Project directory: %CD%
 echo.
 
-echo [INFO] 检查虚拟环境...
+echo [INFO] Checking for virtual environment...
 if not exist "venv\Scripts\activate.bat" (
-    echo [ERROR] 虚拟环境不存在！请先创建虚拟环境
+    echo [ERROR] Virtual environment not found! Please create it first.
     echo.
     pause
     exit /b 1
 )
 
-echo [INFO] 激活虚拟环境...
+echo [INFO] Activating virtual environment...
 call venv\Scripts\activate.bat
 if errorlevel 1 (
-    echo [ERROR] 虚拟环境激活失败！
+    echo [ERROR] Failed to activate virtual environment!
     echo.
     pause
     exit /b 1
 )
-echo [INFO] 虚拟环境激活成功
+echo [INFO] Virtual environment activated successfully.
 echo.
 
-echo [INFO] 检查必要文件...
+echo [INFO] Checking and installing dependencies from requirements.txt...
+python -m pip install -r requirements.txt
+echo.
+
+echo [INFO] Checking for required files...
 if not exist "web_server.py" (
-    echo [ERROR] web_server.py 不存在！
+    echo [ERROR] web_server.py not found!
     pause
     exit /b 1
 )
 
-echo [INFO] 启动Web服务器...
-echo [INFO] 访问地址: http://localhost:5000
-echo [INFO] AI助手已集成，支持智能对话
-echo [INFO] 按 Ctrl+C 停止服务器
+echo [INFO] Starting Web Server...
+echo [INFO] Access URL: http://localhost:5000
+echo [INFO] AI Assistant is integrated, chat is available.
+echo [INFO] Press Ctrl+C to stop the server.
 echo ======================================================
 echo.
+
+echo [INFO] Attempting to open in browser automatically...
+start http://localhost:5000
 
 python web_server.py
 
 echo.
 echo ======================================================
-echo [INFO] Web服务器已停止
+echo [INFO] Web Server has stopped.
 echo ======================================================
 pause

@@ -149,6 +149,10 @@ class DataCleaner:
         if not description and not title:
             return []
         
+        # 确保输入是字符串类型
+        description = str(description) if description and not isinstance(description, str) else (description or "")
+        title = str(title) if title and not isinstance(title, str) else (title or "")
+        
         text = (description + " " + title).lower()
         found_keywords = []
         
@@ -162,6 +166,11 @@ class DataCleaner:
 
     def classify_industry(self, brand: str, title: str = "", description: str = "") -> str:
         """根据品牌、标题、描述分类行业"""
+        # 确保输入是字符串类型
+        brand = str(brand) if brand and not isinstance(brand, str) else (brand or "")
+        title = str(title) if title and not isinstance(title, str) else (title or "")
+        description = str(description) if description and not isinstance(description, str) else (description or "")
+        
         text = (brand + " " + title + " " + description).lower()
         
         for industry, keywords in self.industry_mapping.items():
@@ -173,6 +182,10 @@ class DataCleaner:
 
     def extract_campaign_type(self, description: str, title: str = "") -> str:
         """提取营销活动类型"""
+        # 确保输入是字符串类型
+        description = str(description) if description and not isinstance(description, str) else (description or "")
+        title = str(title) if title and not isinstance(title, str) else (title or "")
+        
         text = (description + " " + title).lower()
         
         # 按优先级检查

@@ -3,414 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数英网项目数据面板</title>
+    <title>营销项目分析助手</title>
     <!-- 添加marked.js库用于markdown解析 -->
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            width: 100%;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            color: white;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 300;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px 30px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #f9ca24);
-            background-size: 400% 400%;
-            animation: gradient 3s ease infinite;
-        }
-
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .card-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        .brands-card .card-icon {
-            color: #ff6b6b;
-        }
-
-        .projects-card .card-icon {
-            color: #4ecdc4;
-        }
-
-        .files-card .card-icon {
-            color: #45b7d1;
-        }
-
-        .card-number {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            animation: countUp 2s ease;
-        }
-
-        @keyframes countUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .card-label {
-            font-size: 1.2rem;
-            color: #7f8c8d;
-            font-weight: 500;
-        }
-
-        .card-description {
-            font-size: 0.9rem;
-            color: #95a5a6;
-            margin-top: 8px;
-            line-height: 1.4;
-        }
-
-        .info-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .chat-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            margin-top: 30px;
-        }
-
-        .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .model-selector-container {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #34495e;
-        }
-
-        #modelSelector {
-            padding: 4px 8px;
-            border-radius: 5px;
-            border: 1px solid #bdc3c7;
-            background-color: #ecf0f1;
-            margin-left: 5px;
-        }
-
-        .clear-chat-btn {
-            background: #ecf0f1;
-            border: 1px solid #bdc3c7;
-            color: #7f8c8d;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s ease;
-        }
-
-        .clear-chat-btn:hover {
-            background: #e0e5e9;
-            color: #2c3e50;
-        }
-
-        .chat-container {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ecf0f1;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #f8f9fa;
-            /* -- 新增样式 -- */
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .chat-message {
-            /* margin-bottom 被 .chat-container 的 gap 替代 */
-            padding: 10px 15px;
-            border-radius: 10px;
-            max-width: 80%;
-            word-wrap: break-word; /* 确保长单词或无空格字符串可以换行 */
-        }
-
-        .user-message {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            align-self: flex-end; /* 靠右对齐 */
-            text-align: left; /* 气泡内文本依然左对齐，便于阅读 */
-        }
-
-        .ai-message {
-            background: white;
-            color: #2c3e50;
-            border: 1px solid #e9ecef;
-            align-self: flex-start; /* 靠左对齐 */
-            line-height: 1.6;
-        }
-
-        /* Markdown样式 */
-        .ai-message strong {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4 {
-            margin: 15px 0 10px 0;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { max-width: 1200px; width: 100%; }
+        .header { text-align: center; margin-bottom: 40px; color: white; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 300; }
+        .header p { font-size: 1.1rem; opacity: 0.9; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 40px; }
+        .card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px 30px; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .card:before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #f9ca24); background-size: 400% 400%; animation: gradient 3s ease infinite; }
+        @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15); }
+        .card-icon { font-size: 3rem; margin-bottom: 20px; display: block; }
+        .brands-card .card-icon { color: #ff6b6b; }
+        .projects-card .card-icon { color: #4ecdc4; }
+        .topbrands-card .card-icon { color: #f39c12; }
+        .card-number { font-size: 3.5rem; font-weight: 700; color: #2c3e50; margin-bottom: 10px; animation: countUp 2s ease; }
+        @keyframes countUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .card-label { font-size: 1.2rem; color: #7f8c8d; font-weight: 500; }
+        .card-description { font-size: 0.9rem; color: #95a5a6; margin-top: 8px; line-height: 1.4; }
+        /* Top5 品牌文本样式，覆盖 card-number 的大字号 */
+        #topBrands { font-size: 1rem !important; font-weight: 600; color: #2c3e50; margin-bottom: 6px; line-height: 1.4; white-space: normal; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .info-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .chat-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 15px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); margin-top: 30px; }
+        .chat-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: #2c3e50; font-size: 1.2rem; font-weight: 600; }
+        .model-selector-container { font-size: 0.9rem; font-weight: 500; color: #34495e; display: flex; align-items: center; gap: 6px; }
+        #modelSelector { padding: 4px 8px; border-radius: 5px; border: 1px solid #bdc3c7; background-color: #ecf0f1; }
+        .clear-chat-btn { margin-left: auto; background: #ecf0f1; border: 1px solid #bdc3c7; color: #7f8c8d; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s ease; }
+        .clear-chat-btn:hover { background: #e0e5e9; color: #2c3e50; }
+        .chat-container { height: 300px; overflow-y: auto; border: 1px solid #ecf0f1; border-radius: 10px; padding: 15px; margin-bottom: 15px; background: #f8f9fa; display: flex; flex-direction: column; gap: 15px; }
+        .chat-message { padding: 10px 15px; border-radius: 10px; max-width: 80%; word-wrap: break-word; }
+        .user-message { background: linear-gradient(45deg, #667eea, #764ba2); color: white; align-self: flex-end; text-align: left; }
+        .ai-message { background: white; color: #2c3e50; border: 1px solid #e9ecef; align-self: flex-start; line-height: 1.6; }
+        .ai-message strong { font-weight: 600; color: #2c3e50; }
+        .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4 { margin: 15px 0 10px 0; font-weight: 600; color: #2c3e50; }
         .ai-message h1 { font-size: 1.4em; }
         .ai-message h2 { font-size: 1.3em; }
         .ai-message h3 { font-size: 1.2em; }
         .ai-message h4 { font-size: 1.1em; }
-
-        .ai-message ul, .ai-message ol {
-            margin: 10px 0;
-            padding-left: 20px;
-        }
-
-        .ai-message li {
-            margin: 5px 0;
-        }
-
-        .ai-message p {
-            margin: 8px 0;
-        }
-
-        .ai-message code {
-            background: #f8f9fa;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.9em;
-        }
-
-        .ai-message pre {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-            margin: 10px 0;
-        }
-
-        .ai-message blockquote {
-            border-left: 4px solid #e9ecef;
-            margin: 10px 0;
-            padding: 5px 15px;
-            background: #f8f9fa;
-        }
-
-        .chat-input-container {
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 25px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-
-        .chat-input:focus {
-            border-color: #667eea;
-        }
-
-        .chat-send-btn {
-            padding: 12px 20px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .chat-send-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .chat-send-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #ecf0f1;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            color: #7f8c8d;
-            font-weight: 500;
-        }
-
-        .info-value {
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        .refresh-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .refresh-btn:hover {
-            transform: rotate(180deg) scale(1.1);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            color: white;
-            margin: 20px 0;
-        }
-
-        .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 3px solid white;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .card {
-                padding: 30px 20px;
-            }
-
-            .card-number {
-                font-size: 2.5rem;
-            }
-
-            .dashboard {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-        }
+        .ai-message ul, .ai-message ol { margin: 10px 0; padding-left: 20px; }
+        .ai-message li { margin: 5px 0; }
+        .ai-message p { margin: 8px 0; }
+        .ai-message code { background: #f8f9fa; padding: 2px 4px; border-radius: 3px; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 0.9em; }
+        .ai-message pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0; }
+        .ai-message blockquote { border-left: 4px solid #e9ecef; margin: 10px 0; padding: 5px 15px; background: #f8f9fa; }
+        .chat-input-container { display: flex; gap: 10px; }
+        .chat-input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px; outline: none; transition: border-color 0.3s ease; }
+        .chat-input:focus { border-color: #667eea; }
+        .chat-send-btn { padding: 12px 20px; background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; }
+        .chat-send-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+        .chat-send-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #ecf0f1; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #7f8c8d; font-weight: 500; }
+        .info-value { color: #2c3e50; font-weight: 600; }
+        .refresh-btn { position: fixed; bottom: 30px; right: 30px; background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; }
+        .refresh-btn:hover { transform: rotate(180deg) scale(1.1); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+        .loading { display: none; text-align: center; color: white; margin: 20px 0; }
+        .spinner { border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 3px solid white; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 768px) { .header h1 { font-size: 2rem; } .card { padding: 30px 20px; } .card-number { font-size: 2.5rem; } .dashboard { grid-template-columns: 1fr; gap: 20px; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>数英网项目数据面板</h1>
+            <h1>营销项目分析助手</h1>
             <p>实时统计品牌数量与项目总数</p>
         </div>
 
@@ -434,11 +96,11 @@
                 <div class="card-description">基于项目链接的唯一性统计</div>
             </div>
 
-            <div class="card files-card">
-                <span class="card-icon">📁</span>
-                <div class="card-number" id="filesCount">-</div>
-                <div class="card-label">数据文件</div>
-                <div class="card-description">已处理的Excel文件数量</div>
+            <div class="card topbrands-card">
+                <span class="card-icon">🏆</span>
+                <div class="card-number" id="topBrands">-</div>
+                <div class="card-label">前5个最多项目的品牌</div>
+                <div class="card-description">按项目数量排序的前五名</div>
             </div>
         </div>
 
@@ -449,7 +111,7 @@
             </div>
             <div class="info-row">
                 <span class="info-label">数据来源</span>
-                <span class="info-value">/data 文件夹中的 Excel 文件</span>
+                <span class="info-value"><a href="https://www.digitaling.com/" target="_blank">https://www.digitaling.com/</a></span>
             </div>
             <div class="info-row">
                 <span class="info-label">统计方式</span>
@@ -457,7 +119,7 @@
             </div>
             <div class="info-row">
                 <span class="info-label">系统状态</span>
-                <span class="info-value" id="systemStatus">正常运行</span>
+                <span class="info-value" id="systemStatus">数据已更新</span>
             </div>
         </div>
 
@@ -465,7 +127,7 @@
             <div class="chat-header">
                 <span>🤖 智能AI助手</span>
                 <div class="model-selector-container">
-                    <label for="modelSelector">选择模型: </label>
+                    <label for="modelSelector">选择模型:</label>
                     <select id="modelSelector">
                         <option value="gemini" selected>Gemini</option>
                         <option value="deepseek">DeepSeek</option>
@@ -479,47 +141,56 @@
                 </div>
             </div>
             <div class="chat-input-container">
-                <input type="text" class="chat-input" id="chatInput" placeholder="输入您的问题..." 
-                       onkeypress="handleKeyPress(event)">
+                <input type="text" class="chat-input" id="chatInput" placeholder="输入您的问题..." onkeypress="handleKeyPress(event)">
                 <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()">发送</button>
             </div>
         </div>
     </div>
 
-    <button class="refresh-btn" onclick="refreshData()" title="刷新数据">
-        🔄
-    </button>
+    <button class="refresh-btn" onclick="refreshData()" title="刷新数据">🔄</button>
 
     <script>
-        // 全局聊天记录
         let chatHistory = [];
 
-        // 数字动画效果
         function animateNumber(element, start, end, duration) {
             const startTimestamp = performance.now();
             const step = (timestamp) => {
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 const current = Math.floor(progress * (end - start) + start);
                 element.textContent = current.toLocaleString();
-                if (progress < 1) {
-                    requestAnimationFrame(step);
-                }
+                if (progress < 1) requestAnimationFrame(step);
             };
             requestAnimationFrame(step);
         }
 
-        // 加载数据
+        function formatTopBrands(topBrandsObj) {
+            try {
+                if (!topBrandsObj || Object.keys(topBrandsObj).length === 0) return '-';
+                // 规范化为 [name, count] 数组并按数量倒序
+                const entries = Object.entries(topBrandsObj)
+                    .map(([name, count]) => [String(name || '未命名'), Number(count) || 0])
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([name, count]) => `${name}(${count})`);
+                return entries.length ? entries.join('、') : '-';
+            } catch (e) {
+                console.warn('格式化Top品牌失败:', e);
+                return '-';
+            }
+        }
+
         function loadData() {
             fetch('web_data.json')
                 .then(response => response.json())
                 .then(data => {
                     const brandsElement = document.getElementById('brandsCount');
                     const projectsElement = document.getElementById('projectsCount');
-                    const filesElement = document.getElementById('filesCount');
+                    const topBrandsElement = document.getElementById('topBrands');
 
-                    animateNumber(brandsElement, 0, data.brands_count, 2000);
-                    animateNumber(projectsElement, 0, data.projects_count, 2500);
-                    animateNumber(filesElement, 0, data.total_files, 1500);
+                    animateNumber(brandsElement, 0, Number(data.brands_count||0), 1500);
+                    animateNumber(projectsElement, 0, Number(data.projects_count||0), 1800);
+                    topBrandsElement.textContent = formatTopBrands(data.top_brands);
+                    topBrandsElement.title = formatTopBrands(data.top_brands);
 
                     document.getElementById('lastUpdated').textContent = data.last_updated;
                     document.getElementById('systemStatus').textContent = '数据已更新';
@@ -528,58 +199,33 @@
                     console.error('加载数据失败:', error);
                     document.getElementById('brandsCount').textContent = 'Error';
                     document.getElementById('projectsCount').textContent = 'Error';
-                    document.getElementById('filesCount').textContent = 'Error';
+                    document.getElementById('topBrands').textContent = 'Error';
                     document.getElementById('systemStatus').textContent = '数据加载失败';
                 });
         }
 
-        // 刷新数据
         function refreshData() {
             const loading = document.getElementById('loading');
             const dashboard = document.getElementById('dashboard');
-            
             loading.style.display = 'block';
             dashboard.style.opacity = '0.5';
-
             fetch('/refresh', { method: 'POST' })
                 .then(response => response.json())
-                .then(data => {
-                    loading.style.display = 'none';
-                    dashboard.style.opacity = '1';
-                    loadData();
-                })
-                .catch(error => {
-                    console.error('刷新失败:', error);
-                    loading.style.display = 'none';
-                    dashboard.style.opacity = '1';
-                    loadData();
-                });
+                .then(() => { loading.style.display = 'none'; dashboard.style.opacity = '1'; loadData(); })
+                .catch(() => { loading.style.display = 'none'; dashboard.style.opacity = '1'; loadData(); });
         }
 
-        // 聊天功能
         function addMessage(message, role) {
             const chatContainer = document.getElementById('chatContainer');
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${role === 'user' ? 'user-message' : 'ai-message'}`;
-            
-            if (role === 'user') {
-                // 用户消息使用textContent（不需要markdown解析）
-                messageDiv.textContent = message;
-            } else {
-                // AI消息使用innerHTML + markdown解析
-                try {
-                    const htmlContent = marked.parse(message);
-                    messageDiv.innerHTML = htmlContent;
-                } catch (error) {
-                    console.warn('Markdown解析失败，使用纯文本:', error);
-                    messageDiv.textContent = message;
-                }
+            if (role === 'user') messageDiv.textContent = message;
+            else {
+                try { messageDiv.innerHTML = marked.parse(message); }
+                catch { messageDiv.textContent = message; }
             }
-            
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
-            
-            // 添加到历史记录
             chatHistory.push({ role: role, content: message });
         }
 
@@ -588,63 +234,30 @@
             const sendBtn = document.getElementById('sendBtn');
             const modelSelector = document.getElementById('modelSelector');
             const message = input.value.trim();
-            
             if (!message) return;
-            
             addMessage(message, 'user');
             input.value = '';
-            
             sendBtn.disabled = true;
             sendBtn.textContent = '思考中...';
-            
             fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    message: message, 
-                    history: chatHistory.slice(0, -1), // 发送除当前消息外的历史记录
-                    model: modelSelector.value // 添加选择的模型
-                })
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message, history: chatHistory.slice(0, -1), model: modelSelector.value })
             })
             .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    addMessage(data.response, 'assistant');
-                } else {
-                    addMessage('❌ ' + (data.response || '处理请求时出现错误'), 'assistant');
-                }
-            })
-            .catch(error => {
-                console.error('聊天请求失败:', error);
-                addMessage('❌ 网络连接错误，请稍后重试', 'assistant');
-            })
-            .finally(() => {
-                sendBtn.disabled = false;
-                sendBtn.textContent = '发送';
-            });
+            .then(data => { addMessage(data.success ? data.response : ('❌ ' + (data.response || '处理请求时出现错误')), 'assistant'); })
+            .catch(() => { addMessage('❌ 网络连接错误，请稍后重试', 'assistant'); })
+            .finally(() => { sendBtn.disabled = false; sendBtn.textContent = '发送'; });
         }
 
         function clearChat() {
             const chatContainer = document.getElementById('chatContainer');
             chatHistory = [];
-            chatContainer.innerHTML = `
-                <div class="chat-message ai-message">
-                    你好，聊天记录已清空，我们可以重新开始。
-                </div>`;
+            chatContainer.innerHTML = `<div class="chat-message ai-message">你好，聊天记录已清空，我们可以重新开始。</div>`;
         }
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        }
+        function handleKeyPress(event) { if (event.key === 'Enter') sendMessage(); }
 
-        // 页面加载完成后加载数据
         document.addEventListener('DOMContentLoaded', loadData);
-
-        // 定期自动刷新数据 (每5分钟)
         setInterval(loadData, 5 * 60 * 1000);
     </script>
 </body>
